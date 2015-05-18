@@ -1,0 +1,42 @@
+---
+title: "PA2"
+author: "CR"
+date: "Monday, May 18, 2015"
+output: html_document
+---
+
+First, load all the necessary packages
+````{r results = "hide"}
+library(dplyr)
+library(ggplot2)
+library(knitr)
+knitr::opts_chunk$set(echo=TRUE)
+```
+
+Load the data
+
+```{r, echo=TRUE}
+rawstorm = read.csv("repdata-data-StormData.csv")
+
+```
+
+Arrange data base in order by fatalities and injuries
+```{r}
+
+by_fat_inj = 
+  
+  rawstorm %>%
+  select(STATE, COUNTYNAME, EVTYPE, BGN_DATE, FATALITIES, INJURIES) %>%
+  arrange(desc(FATALITIES), desc(INJURIES))%>%
+  group_by(EVTYPE, STATE, COUNTYNAME, BGN_DATE)%>%
+  summarise(fatalities = sum(FATALITIES),
+            injuries = sum(INJURIES))%>%
+  arrange(desc(fatalities), desc(injuries))
+
+# cleans up leading whitespaces in EVTYPE
+
+by_fat_inj$EVTYPE = gsub("^\\s+", "", by_fat_inj$EVTYPE)
+
+by_fat_inj2 = arrange(by_fat_inj, desc(fatalities), desc(injuries))
+
+```
