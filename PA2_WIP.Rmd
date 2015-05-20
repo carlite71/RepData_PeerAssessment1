@@ -1,11 +1,12 @@
----
-title: "PA2"
-author: "CR"
-date: "Monday, May 18, 2015"
-output: html_document
----
+"Human and Economic Cost of Weather-related Events from 1950 to 2011"
 
-First, load all the necessary packages
+## Synopsis:
+
+#### 
+
+### Data Processing
+
+#### First, load all the necessary packages
 ````{r results = "hide"}
 library(dplyr)
 library(ggplot2)
@@ -13,14 +14,22 @@ library(knitr)
 knitr::opts_chunk$set(echo=TRUE)
 ```
 
-Load the data
+#### Download and clean the data
 
-```{r, echo=TRUE}
+```{r, echo=TRUE, cache=TRUE}
+
+if (!file.exists("repdata-data-StormData.csv")) {
+  download.file("https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2", rawstorm = "")
+}
 rawstorm = read.csv("repdata-data-StormData.csv")
 
+
+# cleans up leading whitespaces in EVTYPE
+
+rawstorm$EVTYPE = gsub("^\\s+", "", rawstorm$EVTYPE)
 ```
 
-Arrange data base in order by fatalities and injuries
+#### Arrange data base in order by fatalities and injuries
 ```{r}
 
 by_fat_inj = 
@@ -33,10 +42,35 @@ by_fat_inj =
             injuries = sum(INJURIES))%>%
   arrange(desc(fatalities), desc(injuries))
 
-# cleans up leading whitespaces in EVTYPE
+by_state = 
+  
+  rawstorm %>%
+  select(STATE, COUNTYNAME, EVTYPE, BGN_DATE, FATALITIES, INJURIES) %>%
+  group_by(STATE)%>%
+  summarise(fatalities = sum(FATALITIES),
+            injuries = sum(INJURIES))%>%
+  filter(!(fatalities == 0 & injuries == 0))%>%
+  arrange(desc(fatalities), desc(injuries))
+  
 
-by_fat_inj$EVTYPE = gsub("^\\s+", "", by_fat_inj$EVTYPE)
+by_fat_inj3 = 
+  
+  rawstorm %>%
+  select(STATE, COUNTYNAME, EVTYPE, BGN_DATE, FATALITIES, INJURIES) %>%
+  arrange(desc(FATALITIES), desc(INJURIES))
 
-by_fat_inj2 = arrange(by_fat_inj, desc(fatalities), desc(injuries))
+by_fat_inj4 = 
+  
+  rawstorm %>%
+  select(STATE, COUNTYNAME, EVTYPE, BGN_DATE, FATALITIES, INJURIES) %>%
+  group_by(STATE, EVTYPE)%>%
+  summarise(fatalities = sum(FATALITIES),
+            injuries = sum(INJURIES))%>%
+  filter(!(fatalities == 0 & injuries == 0)) %>%
+  ungroup() %>%
+  arrange(desc(fatalities), desc(injuries))
+
+by_fat_inj5 = arrange(by_fat_inj4, desc(as.integer(fatalities)))
+
 
 ```
